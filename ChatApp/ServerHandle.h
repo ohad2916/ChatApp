@@ -17,6 +17,8 @@
 #include <set>
 #pragma comment (lib,"ws2_32.lib")
 
+#define BUFFER_SIZE 256
+
 class serverHandle {
 private:
 	std::unordered_map<std::string, int> serverCommands;
@@ -27,8 +29,6 @@ private:
 	std::thread* pThread = nullptr;
 	std::string server_input{};
 	std::atomic<bool> stopCalled = false;
-	char recvBuffer[4096] = "";
-	std::mutex recvBuffer_lock;
 	std::unordered_map<std::string, Client*> namesTable;
 
 public:
@@ -136,7 +136,7 @@ public:
 				std::cerr << "New client joined from: "<< new_client.ipv4_addr << std::endl;
 				namesTable[new_client._name] = &new_client;
 				//std::cerr << "strarting posting thread! for client:" << acceptSocket << std::endl;
-				std::thread recvThread(&serverHandle::RecvFromClient, this, std::ref(new_client), 4096);
+				std::thread recvThread(&serverHandle::RecvFromClient, this, std::ref(new_client));
 				new_client._state = Client::connected_thread_on;
 				recvThread.detach();
 				//std::cerr << "Client List size is:" << clientList.size() << std::endl;
@@ -145,10 +145,11 @@ public:
 		}
 	}
 	//recieve from a specific client and post to screen
-	void RecvFromClient(Client& client,int len=4096) {
+	void RecvFromClient(Client& client) {
+		char recvBuffer[BUFFER_SIZE];
 		while (client._state != Client::disconnected && !stopCalled){
-			std::memset(recvBuffer, 0, len);
-			int byteCount = recv(client._connection, recvBuffer, 4096, NULL);
+			std::memset(recvBuffer, 0, BUFFER_SIZE);
+			int byteCount = recv(client._connection, recvBuffer, 256, NULL);
 			if (byteCount == SOCKET_ERROR) {
 				std::cerr << client._name << " disconnected!" << std::endl;
 				closesocket(client._connection);
