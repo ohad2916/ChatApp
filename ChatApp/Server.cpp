@@ -1,11 +1,11 @@
-#include <iostream>
-#include <WinSock2.h>
-#include <WS2tcpip.h>
+
+#define BUFFER_SIZE 512
+
 #include "ServerHandle.h"
-#include <chrono>
-#pragma comment (lib,"ws2_32.lib")
+
 #define SERVER_IP L"192.168.0.162"
 #define SERVER_PORT 5000
+#define BUFFER_SIZE 512
 
 
 int Client::default_count{ 0 };

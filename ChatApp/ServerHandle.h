@@ -1,5 +1,8 @@
 #pragma once
 #include <vector>
+#include <chrono>
+#include <WinSock2.h>
+#include <WS2tcpip.h>
 #include <climits>
 #include <string>
 #include <bitset>
@@ -7,8 +10,6 @@
 #include "Message.h"
 #include <cstring>
 #include <iostream>
-#include <WinSock2.h>
-#include <WS2tcpip.h>
 #include <thread>
 #include <chrono>
 #include <unordered_map>
@@ -17,7 +18,10 @@
 #include <set>
 #pragma comment (lib,"ws2_32.lib")
 
+#ifndef BUFFER_SIZE
 #define BUFFER_SIZE 256
+#endif
+
 
 class serverHandle {
 private:
@@ -52,7 +56,7 @@ public:
 			return;
 		}
 		else
-			std::cerr << "Found, Status:" << wsaData.szSystemStatus << std::endl;
+			std::cerr << "Found, Status:" << wsaData.szSystemStatus << " Client Buffer(s) size: "<<BUFFER_SIZE <<  std::endl;
 
 		//Create a listening socket
 		listn_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -69,7 +73,7 @@ public:
 		InetPton(AF_INET, address, &service.sin_addr.S_un.S_addr);
 		service.sin_port = htons(5000);
 		if (bind(listn_sock, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR) {
-			std::cerr << "Error binding!" << std::endl;
+			std::cerr << "Error binding!" << WSAGetLastError() << std::endl;
 			return;
 		}
 		else
@@ -83,7 +87,6 @@ public:
 	void shutdown() {
 		std::cout << "STOP called, shutting down in 3 seconds!" << std::endl;
 		clientList_Lock.lock();
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		for (Client& client : clientList) {
 			if (client._state != Client::disconnected) {
 				closesocket(client._connection);
@@ -127,8 +130,10 @@ public:
 			int accept_addr_size = sizeof(accept_addr);
 			acceptSocket = accept(listn_sock, (sockaddr*)&accept_addr, &accept_addr_size);
 			if (acceptSocket == INVALID_SOCKET) {
-				if(!stopCalled)
+				if(!stopCalled){
 					std::cerr << "Invalid connection attempted!" << std::endl;
+					std::cerr << WSAGetLastError() << std::endl;
+				}
 			}
 			else {
 				clientList_Lock.lock();

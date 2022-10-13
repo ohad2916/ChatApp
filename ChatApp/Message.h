@@ -15,18 +15,14 @@ struct Message{
 	{
 		content = std::format("{}{}", (char)_type, msg);
 	}
-	Message(Type type ,const std::string&& msg) :								//moving
-		_type(type),_size(msg.size()+1)
-	{
-		content = std::format("{}{}", (char)_type, std::move(msg));
-	}
+
 	//constructs from char* instead of std::string
 	Message(Type type, const char& msg,size_t size) :							//copy from char* instead of std::string
 		_type(type), _size(size + 1)
 	{
 		content = std::format("{}{}", (char)_type, msg);
 	}
-	Message(Type type, const char&& msg, size_t size) :							//move from char* instead of std::string
+	Message(Type type, const char&& msg, size_t size) :							//copy from char* instead of std::string
 		_type(type), _size(size + 1)
 	{
 		content = std::format("{}{}", (char)_type, msg);
@@ -38,7 +34,7 @@ struct Message{
 	}
 	//destructor
 	~Message() {
-
+		//does nothhing for now. might be used to deal with heap allocation later on.
 	}
 	//cancel default constructor
 	Message() = delete;
